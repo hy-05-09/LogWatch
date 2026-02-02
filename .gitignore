@@ -1,4 +1,19 @@
-.venv/
-__pycache__/
-*.pyc
-.env
+# python
+**/__pycache__/
+**/*.pyc
+backend/.venv/
+backend/venv/
+**/.env
+**/.env.*
+
+# IDE
+**/.idea/
+**/.vscode/
+
+# node
+frontend/node_modules/
+frontend/dist/
+
+# vectorstore / db (나중에)
+backend/app/data/vectorstore/
+backend/app/data/*.sqlite3
