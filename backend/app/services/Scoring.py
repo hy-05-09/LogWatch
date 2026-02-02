@@ -65,7 +65,7 @@ def score_risk(features: ComputedFeatures) -> Tuple[AnalyzeSummary, List[Signal]
         )
         actions.append(
             ActionItem(
-                action="",
+                action="MFA 재인증 요구 또는 비밀번호 변경 유도",
                 priority="P1",
                 why="신규 지역 로그인은 2차 인증/재인증으로 방어 효과가 큽니다.",
             )

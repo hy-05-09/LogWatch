@@ -1,0 +1,21 @@
+{
+  "request_id": "demo-low",
+  "logs": [
+    {
+      "event_id": "e-low-1",
+      "ts": "2026-02-03T10:00:00Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "SUCCESS",
+      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
+    }
+  ],
+  "context": {
+    "baseline": {
+      "known_countries": ["KR"],
+      "known_devices": ["dev-a"],
+      "typical_login_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17]
+    }
+  }
+}
