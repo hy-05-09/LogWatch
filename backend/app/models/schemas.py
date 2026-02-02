@@ -24,7 +24,7 @@ class Target(BaseModel):
 
 # 분석에 필요한 부가정보
 class Meta(BaseModel):
-    mfa_used: Optional[bool] = None
+    mfa_used: Optional[bool] = None # mfa : Multi-Factor Authentication(다중 인증) 
     reason: Optional[str] = None
 
 
