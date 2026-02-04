@@ -11,3 +11,12 @@ CHROMA_COLLECTION = "policies"
 
 # embeddings
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+
+# Retrieval defaults
+RETRIEVAL_TOP_K = 5
+
+# Chroma cosine distance 기준 (작을수록 유사)
+RETRIEVAL_DISTANCE_THRESHOLD = 0.85
+
+# evidence snippet 길이 제한
+EVIDENCE_SNIPPET_MAX_CHARS = 350
