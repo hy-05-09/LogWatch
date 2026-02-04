@@ -14,6 +14,6 @@ backend/venv/
 frontend/node_modules/
 frontend/dist/
 
-# vectorstore / db (나중에)
+# vectorstore / db
 backend/app/data/vectorstore/
 backend/app/data/*.sqlite3

@@ -7,7 +7,7 @@ class ChromaStore:
     def __init__(self, persist_dir: str, collection_name: str):
         self.client = chromadb.PersistentClient(
             path=persist_dir,
-            settings=Settings(anonymized_telemtry=False),
+            settings=Settings(anonymized_telemetry=False),
         )
         self.collection = self.client.get_or_create_collection(
             name=collection_name,

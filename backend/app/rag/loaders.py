@@ -1,4 +1,4 @@
-from __future__ import __annotations__
+from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Dict, Iterable, Tuple 
@@ -83,10 +83,12 @@ def load_policies(policy_dir: Path) -> List[RawSection]:
     
     out: List[RawSection] = []
     for p in sorted(policy_dir.glob("*")):
-        if p.is_dir:
+        if p.is_dir():
+            print("it's dir")
             continue
         ext = p.suffix.lower()
         if ext in [".txt", ".md"]:
+            print("it's text file")
             out.extend(load_text_file(p))
         elif ext == ".pdf":
             out.extend(load_pdf_file(p))
