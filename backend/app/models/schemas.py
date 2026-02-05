@@ -81,8 +81,9 @@ class Evidence(BaseModel):
     title: str
     section: Optional[str] = None
     page: Optional[int] = None
+    chunk_id: str 
     quote: Optional[str] = None
-    relevance: Optional[float] = None # 관련도 (0~1)
+    distance: Optional[float] = None # vector distance (smaller = more similar)
 
 # 점수/등급/결정 요약
 class AnalyzeSummary(BaseModel):
