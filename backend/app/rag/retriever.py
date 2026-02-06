@@ -7,6 +7,7 @@ from app.rag.config import (
     RETRIEVAL_TOP_K,
     RETRIEVAL_DISTANCE_THRESHOLD,
     EVIDENCE_SNIPPET_MAX_CHARS,
+    EMBEDDING_MODEL_NAME
 )
 from app.rag.embedder import Embedder
 from app.rag.chroma_store import ChromaStore
@@ -26,14 +27,15 @@ def _dedupe_evidence(items: List[Evidence]) -> List[Evidence]:
         if e.chunk_id in seen:
             continue
         out.append(e)
-        seen.append(e.chunk_id)
+        seen.add(e.chunk_id)
     return out
 
 class PolicyRetriever:
     def __init__(self, *, top_k= RETRIEVAL_TOP_K, distance_threshold = RETRIEVAL_DISTANCE_THRESHOLD, embed_model_name: Optional[str] = None):
         self.top_k = top_k
         self.distance_threshold = distance_threshold
-        self.embedder = Embedder(model_name=embed_model_name) if embed_model_name else Embedder()
+        model = embed_model_name or EMBEDDING_MODEL_NAME
+        self.embedder = Embedder(model)
         self.store = ChromaStore(persist_dir=VECTORSTORE_DIR, collection_name=CHROMA_COLLECTION)
 
     def retrieve(self, queries) -> Tuple[List[Evidence], Dict[str, Any]]:
@@ -43,7 +45,7 @@ class PolicyRetriever:
           - debug meta (for logging / future UI)
         """
         all_hits: List[Evidence] = []
-        debug: Dict[str, Any] = {"quereis": queries, "threshold":self.distance_threshold}
+        debug: Dict[str, Any] = {"queries": queries, "threshold":self.distance_threshold}
 
         for q in queries:
             q_emb = self.embedder.embed_query(q)

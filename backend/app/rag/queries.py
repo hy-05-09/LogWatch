@@ -21,5 +21,5 @@ def build_retrieval_queries(signals: List[Signal]) -> List[str]:
     for q in qs:
         if q not in seen:
             out.append(q)
-            seen.app(q)
+            seen.add(q)
     return out
