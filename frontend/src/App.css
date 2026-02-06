@@ -40,3 +40,15 @@
 .read-the-docs {
   color: #888;
 }
+
+button {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+}
+button:hover { background: #f7f7f7; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+code { background: #f3f3f3; padding: 2px 6px; border-radius: 6px; }
+body { background: #fafafa; }
