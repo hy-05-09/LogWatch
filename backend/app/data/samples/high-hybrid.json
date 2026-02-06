@@ -1,5 +1,6 @@
 {
   "request_id": "demo-high",
+  "retrieval_mode": "hybrid",
   "logs": [
     {
       "event_id": "e-high-1",

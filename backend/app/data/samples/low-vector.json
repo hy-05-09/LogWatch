@@ -1,5 +1,6 @@
 {
   "request_id": "demo-low",
+  "retrieval_mode": "vector",
   "logs": [
     {
       "event_id": "e-low-1",

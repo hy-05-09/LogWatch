@@ -131,6 +131,8 @@ export default function App() {
   const [error, setError] = useState<string>("");
   const [resp, setResp] = useState<AnalyzeResponse | null>(null);
   const [view, setView] = useState<View>("overview");
+  const [retrievalMode, setRetrievalMode] = useState<"vector" | "hybrid">("hybrid");
+
 
   const onSample = (which: "low" | "med" | "high") => {
     setView("overview");
@@ -147,13 +149,21 @@ export default function App() {
     setError("");
     setResp(null);
 
-    let payload: unknown;
+    let payload: any;
     try {
       payload = JSON.parse(input);
     } catch (e) {
       setError("JSON 파싱 실패: 입력 JSON 형식을 확인해줘.");
       return;
     }
+
+    payload = {
+      ...payload,
+      context: {
+        ...(payload.context ?? {}),
+        retrieval_mode: retrievalMode,
+      },
+    };
 
     setLoading(true);
     try {
@@ -193,6 +203,7 @@ export default function App() {
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 30}}>
         <div style={{flex:1}}/>
+
 
         <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
           <button onClick={() => onSample("low")}>샘플 LOW</button>
@@ -238,6 +249,36 @@ export default function App() {
             onClick={() => setView("evidence")}
             disabled={!resp}
           />
+          <div style={{ borderTop: "1px solid #eee", marginTop: 12, paddingTop: 12 }}>
+            <div style={{ fontWeight: 800, fontSize: 12, color: "#666", marginBottom: 8 }}>
+              Retrieval Mode
+            </div>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+              <input
+                type="radio"
+                name="retrievalMode"
+                checked={retrievalMode === "hybrid"}
+                onChange={() => setRetrievalMode("hybrid")}
+              />
+              Hybrid (BM25 + Vector)
+            </label>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, marginTop: 6 }}>
+              <input
+                type="radio"
+                name="retrievalMode"
+                checked={retrievalMode === "vector"}
+                onChange={() => setRetrievalMode("vector")}
+              />
+              Vector only
+            </label>
+
+            {/* 선택: 현재 선택값 표시(디버깅/데모용) */}
+            <div style={{ marginTop: 8, fontSize: 11, color: "#888" }}>
+              Current: <b>{retrievalMode}</b>
+            </div>
+          </div>
         </aside>
 
         {/* Content */}

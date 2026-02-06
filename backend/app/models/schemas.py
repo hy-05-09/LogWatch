@@ -51,6 +51,7 @@ class Baseline(BaseModel):
 # 부가 정보 묶음
 class AnalyzeContext(BaseModel):
     baseline: Optional[Baseline] = None
+    retrieval_mode: Optional[Literal["vector", "hybrid"]] = None
 
 # /analyze 요청 전체 포맷
 class AnalyzeRequest(BaseModel):

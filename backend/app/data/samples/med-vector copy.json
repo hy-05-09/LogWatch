@@ -1,5 +1,6 @@
 {
   "request_id": "demo-med",
+  "retrieval_mode": "vector",
   "logs": [
     {
       "event_id": "e-med-1",
