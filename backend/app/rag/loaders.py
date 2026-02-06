@@ -40,7 +40,7 @@ def load_text_file(path: Path) -> List[RawSection]:
                     text=chunk,
                 )
             )
-        burffer = []
+        buffer.clear()
     
     for line in text.splitlines():
         ls = line.strip()
@@ -79,7 +79,7 @@ def load_pdf_file(path: Path) -> List[RawSection]:
 # policies 폴더 전체를 스캔하여 확장자별로 관련 정보 가져오기
 def load_policies(policy_dir: Path) -> List[RawSection]:
     if not policy_dir.exists():
-        raise FileExistsError(f"Policy dir not found: {policy_dir}")
+        raise FileNotFoundError(f"Policy dir not found: {policy_dir}")
     
     out: List[RawSection] = []
     for p in sorted(policy_dir.glob("*")):

@@ -52,7 +52,7 @@ def chunk_text(text: str, max_chars: int = 900, overlap: int = 150) -> List[str]
             out.append(m)
         else:
             pref = prev_tail[-overlap:] if prev_tail else ""
-            out.append((pref + "\n" + m).strip)
+            out.append((pref + "\n" + m).strip())
         prev_tail = m
 
     return out

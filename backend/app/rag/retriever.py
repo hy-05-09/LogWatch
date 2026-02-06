@@ -36,7 +36,7 @@ class PolicyRetriever:
         self.distance_threshold = distance_threshold
         model = embed_model_name or EMBEDDING_MODEL_NAME
         self.embedder = Embedder(model)
-        self.store = ChromaStore(persist_dir=VECTORSTORE_DIR, collection_name=CHROMA_COLLECTION)
+        self.store = ChromaStore(str(VECTORSTORE_DIR), CHROMA_COLLECTION)
 
     def retrieve(self, queries) -> Tuple[List[Evidence], Dict[str, Any]]:
         """

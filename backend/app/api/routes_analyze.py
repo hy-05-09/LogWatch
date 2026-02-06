@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.models.schemas import AnalyzeRequest, AnalyzeResponse
 from app.services.features import extract_features
-from app.services.Scoring import score_risk
+from app.services.scoring import score_risk
 from app.rag.queries import build_retrieval_queries
 from app.rag.retriever import PolicyRetriever
 
