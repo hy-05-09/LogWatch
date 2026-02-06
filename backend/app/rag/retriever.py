@@ -158,6 +158,33 @@ class PolicyRetriever:
             debug["vector"] = {"per_query": per_query}
 
 
+        # -------------------------
+        # HYBRID (BM25 + VECTOR)
+        # -------------------------
+        else:
+            if self.ensemble is None or self.bm25_retriever is None:
+                raise RuntimeError("Hybrid mode requires bm25_retriever and ensemble to be initialized.")
+            
+            bm25_counts = []
+            vec_counts = []
+
+            for q in queries:
+                bm25_docs = self.bm25_retriever.invoke(q)
+                bm25_counts.append({"q":q, "hits": len(bm25_docs)})
+
+                vec_docs, _ = self._vector_hits_with_optional_score(q)
+                vec_counts.append({"q":q, "hits":len(vec_docs)})
+
+                ens_docs = self.ensemble.invoke(q)
+                for d in ens_docs:
+                    all_hits.append(_doc_to_evidence(d, distance=None))
+
+            debug["hybrid"] = {
+                "weights": list(self.ensemble_weights),
+                "bm25_per_query": bm25_counts,
+                "vector_per_query": vec_counts,
+            }
+
 
         # 공통 후처리       
         all_hits = _dedupe_evidence(all_hits)
