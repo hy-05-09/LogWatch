@@ -1,5 +1,10 @@
 from __future__ import annotations
 from typing import List, Optional, Dict, Any, Tuple
+from langchain_chroma import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_classic.retrievers import BM25Retriever
+from langchain_classic.retrievers import EnsembleRetriever
+from langchain_core.documents import Document
 from app.models.schemas import Evidence
 from app.rag.config import (
     VECTORSTORE_DIR,
@@ -9,8 +14,9 @@ from app.rag.config import (
     EVIDENCE_SNIPPET_MAX_CHARS,
     EMBEDDING_MODEL_NAME
 )
-from app.rag.embedder import Embedder
-from app.rag.chroma_store import ChromaStore
+from app.rag.lc_docs import build_policy_documents
+# from app.rag.embedder import Embedder
+# from app.rag.chroma_store import ChromaStore
 
 # evidence snippet 길이 잘라주는 유틸
 def _snip(text: str, max_chars: int) -> str:
@@ -30,49 +36,132 @@ def _dedupe_evidence(items: List[Evidence]) -> List[Evidence]:
         seen.add(e.chunk_id)
     return out
 
+def _doc_to_evidence(doc: Document, *, distance: Optional[float] = None) -> Evidence:
+    meta = doc.metadata or {}
+    return Evidence(
+        title=meta.get("title") or meta.get("doc_id") or "unknown",
+        doc_id=meta.get("doc_id") or "unknown",
+        section=meta.get("section"),
+        page=meta.get("page"),
+        chunk_id=meta.get("chunk_id") or "unknown",
+        quote=_snip(doc.page_content, EVIDENCE_SNIPPET_MAX_CHARS),
+        distance=distance,
+    )
+
 class PolicyRetriever:
-    def __init__(self, *, top_k= RETRIEVAL_TOP_K, distance_threshold = RETRIEVAL_DISTANCE_THRESHOLD, embed_model_name: Optional[str] = None):
+    """
+    LangChain 기반 Retriever 레이어.
+    - mode="vector": Chroma(Vector)만 사용
+    - mode="hybrid": BM25 + Vector Ensemble 사용 (classic EnsembleRetriever)
+    """
+    def __init__(self, 
+                *, mode: str = "vector",
+                top_k: int = RETRIEVAL_TOP_K, 
+                distance_threshold: float = RETRIEVAL_DISTANCE_THRESHOLD, 
+                embed_model_name: Optional[str] = None,
+                ensemble_weights: Tuple[float, float] = (0.4, 0.6),
+                enable_threshold: bool = False,
+                ):
+        self.mode = mode
         self.top_k = top_k
         self.distance_threshold = distance_threshold
-        model = embed_model_name or EMBEDDING_MODEL_NAME
-        self.embedder = Embedder(model)
-        self.store = ChromaStore(str(VECTORSTORE_DIR), CHROMA_COLLECTION)
+        self.enable_threshold = enable_threshold
+        self.ensemble_weights = ensemble_weights
 
-    def retrieve(self, queries) -> Tuple[List[Evidence], Dict[str, Any]]:
+        model_name = embed_model_name or EMBEDDING_MODEL_NAME
+        self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+        
+        # Vectorstore
+        self.vs = Chroma(
+            collection_name=CHROMA_COLLECTION,
+            persist_directory=str(VECTORSTORE_DIR),
+            embedding_function=self.embeddings,
+        )
+
+        # Vector retriever
+        self.vector_retriever = self.vs.as_retriever(search_kwargs={"k":self.top_k})
+
+        # Hybrid : BM25 + Ensemble
+        self.bm25_retriever: Optional[BM25Retriever] = None
+        self.ensemble: Optional[EnsembleRetriever] = None
+
+        if self.mode == "hybrid":
+            policy_docs = build_policy_documents()
+
+            bm25 = BM25Retriever.from_documents(policy_docs)
+            bm25.k = self.top_k
+            self.bm25_retriever = bm25
+
+            w_bm25, w_vec = self.ensemble_weights
+            self.ensemble = EnsembleRetriever(
+                retrievers=[bm25, self.vector_retriever],
+                weights=[w_bm25, w_vec]
+            )
+
+
+    def _vector_hits_with_optional_score(
+            self, query: str
+    ) -> Tuple[List[Document], Optional[List[float]]]:
+        """
+        score(거리/유사도)를 함께 받는 기능.
+        enable_threshold=False면 안정적으로 docs만 가져온다.
+        """
+        if not self.enable_threshold:
+            docs = self.vs.similarity_search(query, k=self.top_k)
+            return docs, None
+        
+        # score 포함 검색
+        pairs = self.vs.similarity_search_with_score(query, k=self.top_k)
+        docs = [d for d, _ in pairs]
+        scores = [float(s) for _, s in pairs]
+        return docs, scores
+
+
+    def retrieve(self, queries: List[str]) -> Tuple[List[Evidence], Dict[str, Any]]:
         """
         Returns:
           - evidence list
           - debug meta (for logging / future UI)
         """
         all_hits: List[Evidence] = []
-        debug: Dict[str, Any] = {"queries": queries, "threshold":self.distance_threshold}
+        debug: Dict[str, Any] = {
+            "mode": self.mode,
+            "queries": queries, 
+            "top_k": self.top_k,
+            "enable_threshold": self.enable_threshold,
+            "threshold":self.distance_threshold,
+            }
 
-        for q in queries:
-            q_emb = self.embedder.embed_query(q)
-            res = self.store.query(query_embedding=q_emb, top_k=self.top_k)
 
-            documents = (res.get("documents") or [[]])[0]
-            metadatas = (res.get("metadatas") or [[]])[0]
-            distances = (res.get("distances") or [[]])[0]
+        # --------------------------
+        # VECTOR ONLY
+        # --------------------------
+        if self.mode == "vector":
+            per_query = []
+            for q in queries:
+                docs, scores = self._vector_hits_with_optional_score(q)
 
-            for doc_text, meta, dist in zip(documents, metadatas, distances):
-                if dist is None or dist > self.distance_threshold:
-                    continue
-
-                meta = meta or {}
-                all_hits.append(
-                    Evidence(
-                        title=meta.get("title") or meta.get("doc_id") or "unknown",
-                        doc_id=meta.get("doc_id") or "unknown",
-                        section=meta.get("section"),
-                        page=meta.get("page"),
-                        chunk_id=meta.get("chunk_id") or meta.get("id") or "unknown",
-                        quote=_snip(doc_text, EVIDENCE_SNIPPET_MAX_CHARS),
-                        distance=float(dist),
-                    )
-                )
-
+                evs: List[Evidence] = []
+                if scores is None:
+                    for d in docs:
+                        evs.append(_doc_to_evidence(d, distance=None))
+                else:
+                    for d, s in zip(docs, scores):
+                        if s is None:
+                            continue
+                        if s > self.distance_threshold:
+                            continue
+                        evs.append(_doc_to_evidence(d, distance=float(s)))
                 
+                per_query.append({"q":q, "hits": len(evs)})
+                all_hits.extend(evs)
+            debug["vector"] = {"per_query": per_query}
+
+
+
+        # 공통 후처리       
         all_hits = _dedupe_evidence(all_hits)
         all_hits.sort(key=lambda e: (e.distance if e.distance is not None else 9999.0))
+
+        debug["evidence_count"] = len(all_hits)
         return all_hits, debug

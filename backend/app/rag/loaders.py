@@ -84,11 +84,9 @@ def load_policies(policy_dir: Path) -> List[RawSection]:
     out: List[RawSection] = []
     for p in sorted(policy_dir.glob("*")):
         if p.is_dir():
-            print("it's dir")
             continue
         ext = p.suffix.lower()
         if ext in [".txt", ".md"]:
-            print("it's text file")
             out.extend(load_text_file(p))
         elif ext == ".pdf":
             out.extend(load_pdf_file(p))

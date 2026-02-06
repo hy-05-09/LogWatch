@@ -6,7 +6,8 @@ from app.rag.queries import build_retrieval_queries
 from app.rag.retriever import PolicyRetriever
 
 router = APIRouter(tags=["analyze"])
-retriever = PolicyRetriever()
+retriever = PolicyRetriever(mode="vector", enable_threshold=False)
+
 
 @router.post("/analyze", response_model=AnalyzeResponse)
 def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
