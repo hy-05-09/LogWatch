@@ -1,60 +1,24 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-// import './App.css'
-
-// function App() {
-//   const [count, setCount] = useState(0)
-
-//   return (
-//     <>
-//       <div>
-//         <a href="https://vite.dev" target="_blank">
-//           <img src={viteLogo} className="logo" alt="Vite logo" />
-//         </a>
-//         <a href="https://react.dev" target="_blank">
-//           <img src={reactLogo} className="logo react" alt="React logo" />
-//         </a>
-//       </div>
-//       <h1>Vite + React</h1>
-//       <div className="card">
-//         <button onClick={() => setCount((count) => count + 1)}>
-//           count is {count}
-//         </button>
-//         <p>
-//           Edit <code>src/App.tsx</code> and save to test HMR
-//         </p>
-//       </div>
-//       <p className="read-the-docs">
-//         Click on the Vite and React logos to learn more
-//       </p>
-//     </>
-//   )
-// }
-
-// export default App
-
 import { useMemo, useState } from "react";
 import "./App.css";
 import { SAMPLE_LOW, SAMPLE_MED, SAMPLE_HIGH } from "./sample.ts";
 
 type AnalyzeResponse = {
+  request_id?:string;
   summary?: {
     risk_score: number;
     risk_level: "LOW" | "MED" | "HIGH";
     decision: "ALLOW" | "REVIEW" | "ESCALATE";
   };
   signals?: Array<{
-    id?: string;
-    name?: string;
-    description?: string;
-    severity?: string;
+    key?: string;
     value?: unknown;
+    weight?: number;
+    reason?: string;
   }>;
   recommended_actions?: Array<{
-    id?: string;
-    title?: string;
-    description?: string;
+    action?: string;
+    priority?: string;
+    why?: string;
   }>;
   evidence?: Array<{
     title?: string;
@@ -68,6 +32,10 @@ type AnalyzeResponse = {
   debug?: unknown;
 };
 
+type View = "overview" | "signals" | "evidence";
+
+
+// 긴 문자열 n글자까지만 잘라서 미리보기
 function clampStr(s: string, n: number) {
   if (!s) return "";
   return s.length <= n ? s : s.slice(0, n) + "…";
@@ -124,13 +92,48 @@ function CollapsibleQuote({ quote }: { quote?: string }) {
   );
 }
 
+function NavItem({
+  label,
+  active,
+  disabled,
+  onClick,
+}:{
+  label: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width:"100%",
+        textAlign:"left",
+        padding: "10px 12px",
+        marginBottom: 6,
+        borderRadius:10,
+        border: "1px solid #ddd",
+        background: active ? "#f0f6ff" : "#fff",
+        fontWeight: 80,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function App() {
-  const [input, setInput] = useState<string>(SAMPLE_LOW);
+  const [input, setInput] = useState<string>("로그를 입력하세요.");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [resp, setResp] = useState<AnalyzeResponse | null>(null);
+  const [view, setView] = useState<View>("overview");
 
   const onSample = (which: "low" | "med" | "high") => {
+    setView("overview");
     setError("");
     setResp(null);
     if (which === "low") setInput(SAMPLE_LOW);
@@ -138,7 +141,9 @@ export default function App() {
     if (which === "high") setInput(SAMPLE_HIGH);
   };
 
+  
   const onAnalyze = async () => {
+    setView("overview");
     setError("");
     setResp(null);
 
@@ -179,143 +184,191 @@ export default function App() {
   const evidence = resp?.evidence ?? [];
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto" }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 5, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto" }}>
       <h1 style={{ margin: 0 }}>LogWatch AI</h1>
-      <p style={{ marginTop: 6, color: "#555" }}>
-        JSON 로그를 분석해 <b>risk</b> / <b>decision</b>과 <b>정책 근거(evidence)</b>를 반환합니다.
+      <p style={{ marginTop: 12, color: "#555", fontSize: 13}}>
+        사내 시스템 로그인 로그를 입력하면, 보안 정책 문서를 검색해 위험도와 권장 조치를 제안하고, <br />
+        근거까지 제공하는 보안 운영 의사결정 보조 AI Agent입니다. 
       </p>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12 }}>
-        <button onClick={() => onSample("low")}>샘플 LOW</button>
-        <button onClick={() => onSample("med")}>샘플 MED</button>
-        <button onClick={() => onSample("high")}>샘플 HIGH</button>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 30}}>
+        <div style={{flex:1}}/>
 
-        <div style={{ flex: 1 }} />
+        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+          <button onClick={() => onSample("low")}>샘플 LOW</button>
+          <button onClick={() => onSample("med")}>샘플 MED</button>
+          <button onClick={() => onSample("high")}>샘플 HIGH</button>
+        </div>
 
-        <button onClick={onAnalyze} disabled={loading} style={{ fontWeight: 700 }}>
-          {loading ? "Analyzing..." : "Analyze"}
-        </button>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={onAnalyze} disabled={loading} style={{ fontWeight: 700 }}>
+            {loading ? "Analyzing..." : "Analyze"}
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 16, marginTop: 16 }}>
-        {/* Input */}
-        <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-          <div style={{ fontWeight: 800, marginBottom: 8 }}>Input JSON</div>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            spellCheck={false}
-            style={{
-              width: "100%",
-              height: 420,
-              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-              fontSize: 12.5,
-              lineHeight: 1.4,
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              resize: "vertical",
-            }}
+      <div style={{display: "flex", gap:16, marginTop: 0, alignItems: "flex-start"}}>
+        {/* Sidebar */}
+        <aside
+        style={{
+          width: 200,
+          position: "sticky",
+          top: 16,
+          alignSelf: "flex-start",
+          border: "1px solid #e5e5e5",
+          borderRadius: 12,
+          background: "#fff",
+          padding: 10,
+          marginTop: 10,
+        }}>
+          <div style={{fontWeight: 800, fontSize: 12, color: "#666", marginBottom: 8}}>
+            Sections
+          </div>
+
+          <NavItem label="Overview" active={view === "overview"} onClick={() => setView("overview")}/>
+          <NavItem
+            label={`Signals & Actions${resp ? ` (${signals.length}/${actions.length})` : ""}`}
+            active={view === "signals"}
+            onClick={() => setView("signals")}
+            disabled={!resp}
           />
-          {error && (
-            <div style={{ marginTop: 10, padding: 10, background: "#ffe8e8", border: "1px solid #ffb3b3", borderRadius: 10 }}>
-              <b>에러</b>
-              <div style={{ whiteSpace: "pre-wrap" }}>{error}</div>
-            </div>
-          )}
-        </div>
+          <NavItem
+            label={`Evidence${resp ? ` (${evidence.length})` : ""}`}
+            active={view === "evidence"}
+            onClick={() => setView("evidence")}
+            disabled={!resp}
+          />
+        </aside>
 
-        {/* Summary */}
-        <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-            <div style={{ fontWeight: 800 }}>Summary</div>
-            <RiskBadge level={summary?.risk_level} />
-          </div>
-
-          {resp ? (
-            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-              <div><b>risk_score</b>: {summary?.risk_score ?? "-"}</div>
-              <div><b>risk_level</b>: {summary?.risk_level ?? "-"}</div>
-              <div><b>decision</b>: {summary?.decision ?? "-"}</div>
-            </div>
-          ) : (
-            <div style={{ marginTop: 10, color: "#666" }}>Analyze를 누르면 결과가 표시됩니다.</div>
-          )}
-        </div>
-      </div>
-
-      {/* Signals / Actions / Evidence */}
-      {resp && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-          <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-            <div style={{ fontWeight: 800, marginBottom: 8 }}>Signals ({signals.length})</div>
-            {signals.length === 0 ? (
-              <div style={{ color: "#666" }}>(none)</div>
-            ) : (
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {signals.map((s, i) => (
-                  <li key={i} style={{ marginBottom: 8 }}>
-                    <div><b>{s.name ?? s.id ?? `signal-${i}`}</b></div>
-                    {s.description && <div style={{ color: "#555" }}>{s.description}</div>}
-                    {s.severity && <div style={{ fontSize: 12, color: "#777" }}>severity: {s.severity}</div>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-            <div style={{ fontWeight: 800, marginBottom: 8 }}>Recommended Actions ({actions.length})</div>
-            {actions.length === 0 ? (
-              <div style={{ color: "#666" }}>(none)</div>
-            ) : (
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {actions.map((a, i) => (
-                  <li key={i} style={{ marginBottom: 8 }}>
-                    <div><b>{a.title ?? a.id ?? `action-${i}`}</b></div>
-                    {a.description && <div style={{ color: "#555" }}>{a.description}</div>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
-
-      {resp && (
-        <div style={{ marginTop: 16, border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-          <div style={{ fontWeight: 800, marginBottom: 8 }}>Evidence ({evidence.length})</div>
-          {evidence.length === 0 ? (
-            <div style={{ color: "#666" }}>
-              (none) — guardrail 정책상 근거가 없으면 추측 기반 ESCALATE는 금지될 수 있습니다.
-            </div>
-          ) : (
-            <div style={{ display: "grid", gap: 12 }}>
-              {evidence.map((ev, i) => (
-                <div key={i} style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                    <div style={{ fontWeight: 800 }}>{ev.title ?? ev.doc_id ?? `doc-${i}`}</div>
-                    <div style={{ fontSize: 12, color: "#666" }}>
-                      distance: {typeof ev.distance === "number" ? ev.distance.toFixed(4) : "-"}
+        {/* Content */}
+        <main style={{flex:1, minWidth:0}}>
+            <div style={{width: 980, maxWidth: "100%"}}>
+              {view === "overview" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 16, marginTop: 10 }}>
+                  {/* Input */}
+                  <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
+                    <div style={{ fontWeight: 800, marginBottom: 8 }}>Input JSON</div>
+                      <textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        spellCheck={false}
+                        style={{
+                          width: "95%",
+                          height: 420,
+                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                          fontSize: 12.5,
+                          lineHeight: 1.4,
+                          padding: 12,
+                          borderRadius: 10,
+                          border: "1px solid #ddd",
+                          resize: "vertical",
+                        }}
+                      />
+                      {error && (
+                        <div style={{ marginTop: 10, padding: 10, background: "#ffe8e8", border: "1px solid #ffb3b3", borderRadius: 10 }}>
+                          <b>에러</b>
+                          <div style={{ whiteSpace: "pre-wrap" }}>{error}</div>
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
-                    section: {ev.section ?? "-"} | page: {ev.page ?? "-"} | chunk_id: {ev.chunk_id ?? "-"}
-                  </div>
+                  {/* Summary */}
+                  <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                      <div style={{ fontWeight: 800 }}>Summary</div>
+                      <RiskBadge level={summary?.risk_level} />
+                    </div>
 
-                  <div style={{ marginTop: 10 }}>
-                    <CollapsibleQuote quote={ev.quote} />
+                    {resp ? (
+                      <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+                        <div><b>risk_score</b>: {summary?.risk_score ?? "-"}</div>
+                        <div><b>risk_level</b>: {summary?.risk_level ?? "-"}</div>
+                        <div><b>decision</b>: {summary?.decision ?? "-"}</div>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: 10, color: "#666" }}>Analyze를 누르면 결과가 표시됩니다.</div>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              )}
 
-      <div style={{ marginTop: 18, fontSize: 12, color: "#777" }}>
-        Endpoint: <code>POST http://127.0.0.1:8000/api/analyze</code>
+              {/* Signals / Actions */}
+              { view === "signals" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+                  <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
+                    <div style={{ fontWeight: 800, marginBottom: 8 }}>Signals ({signals.length})</div>
+                    {signals.length === 0 ? (
+                      <div style={{ color: "#666" }}>(none)</div>
+                    ) : (
+                      <ul style={{ margin: 0, paddingLeft: 18 }}>
+                        {signals.map((s, i) => (
+                          <li key={i} style={{ marginBottom: 8 }}>
+                            <div><b>{s.key ?? `signal-${i}`}</b></div>
+                            {s.reason && <div style={{ color: "#555" }}>{s.reason}</div>}
+                            {s.weight && <div style={{ fontSize: 12, color: "#777" }}>severity: {s.weight}</div>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
+                    <div style={{ fontWeight: 800, marginBottom: 8 }}>Recommended Actions ({actions.length})</div>
+                    {actions.length === 0 ? (
+                      <div style={{ color: "#666" }}>(none)</div>
+                    ) : (
+                      <ul style={{ margin: 0, paddingLeft: 18 }}>
+                        {actions.map((a, i) => (
+                          <li key={i} style={{ marginBottom: 8 }}>
+                            <div><b>{a.action ?? `action-${i}`}</b></div>
+                            {a.priority && <div style={{ color: "#555" }}>{a.priority}</div>}
+                            {a.why && <div style={{ fontSize: 12, color: "#777" }}>description: {a.why}</div>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+
+                {/* Evidence */}
+              {view === "evidence" && (
+                <div style={{ marginTop: 16, border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
+                  <div style={{ fontWeight: 800, marginBottom: 8 }}>Evidence ({evidence.length})</div>
+                  {evidence.length === 0 ? (
+                    <div style={{ color: "#666" }}>
+                      (none) — guardrail 정책상 근거가 없으면 추측 기반 ESCALATE는 금지될 수 있습니다.
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 12 }}>
+                      {evidence.map((ev, i) => (
+                        <div key={i} style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                            <div style={{ fontWeight: 800 }}>{ev.title ?? ev.doc_id ?? `doc-${i}`}</div>
+                            <div style={{ fontSize: 12, color: "#666" }}>
+                              distance: {typeof ev.distance === "number" ? ev.distance.toFixed(4) : "-"}
+                            </div>
+                          </div>
+
+                          <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
+                            section: {ev.section ?? "-"} | page: {ev.page ?? "-"} | chunk_id: {ev.chunk_id ?? "-"}
+                          </div>
+
+                          <div style={{ marginTop: 10 }}>
+                            <CollapsibleQuote quote={ev.quote} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* <div style={{ marginTop: 18, fontSize: 12, color: "#777" }}>
+                Endpoint: <code>POST http://127.0.0.1:8000/api/analyze</code>
+              </div> */}
+            </div>
+        </main>
       </div>
     </div>
   );
