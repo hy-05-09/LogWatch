@@ -333,6 +333,29 @@ export default function App() {
   const signals = resp?.signals ?? [];
   const actions = resp?.recommended_actions ?? [];
   const evidence = resp?.evidence ?? [];
+  const debugAny = (resp?.debug ?? {}) as any;
+const guardrailNoEvidence = !!debugAny?.guardrail_no_evidence;
+
+const summaryEvidence = useMemo(() => {
+  const seen = new Set<string>();
+  const out: Array<{ title?: string; section?: string; page?: number | null; doc_id?: string }> = [];
+
+  for (const ev of evidence) {
+    const t = ev.title ?? ev.doc_id ?? "";
+    const s = ev.section ?? "";
+    const p = ev.page ?? null;
+
+    const key = `${t}::${s}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    out.push({ title: t, section: s, page: p, doc_id: ev.doc_id });
+    if (out.length >= 3) break;
+  }
+
+  return out;
+}, [evidence]);
+
 
     const filteredSignals = useMemo(() => {
     const q = sigQuery.trim().toLowerCase();
@@ -504,7 +527,38 @@ export default function App() {
                         <div><b>risk_score</b>: {summary?.risk_score ?? "-"}</div>
                         <div><b>risk_level</b>: {summary?.risk_level ?? "-"}</div>
                         <div><b>decision</b>: {summary?.decision ?? "-"}</div>
+                        <br />
+                        {guardrailNoEvidence && (
+                          <div style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(245,158,11,0.28)", background: "rgba(245,158,11,0.10)", fontSize: 12 }}>
+                            <b>Guardrail</b>: evidence가 없어 <b>추측 기반 ESCALATE</b>를 막고 <b>REVIEW</b>로 완화했습니다.
+                          </div>
+                        )}
+
+                        <div>
+                          <div style={{ fontWeight: 850, fontSize: 12, color: "#555", marginBottom: 6 }}>
+                            Decision Evidence (top {summaryEvidence.length})
+                          </div>
+
+                          {summaryEvidence.length === 0 ? (
+                            <div style={{ fontSize: 12, color: "#777" }}>표시할 근거가 없습니다.</div>
+                          ) : (
+                            <div style={{ display: "grid", gap: 6 }}>
+                              {summaryEvidence.map((ev, i) => (
+                                <div key={i} style={{ fontSize: 12, lineHeight: 1.45, color: "#444" }}>
+                                  • <b>{ev.title ?? ev.doc_id}</b>
+                                  {ev.section ? ` > ${ev.section}` : ""}
+                                  {typeof ev.page === "number" ? ` (p.${ev.page})` : ""}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div style={{ marginTop: 6, fontSize: 11.5, color: "#777" }}>
+                            전체 근거는 <b>Evidence</b> 탭에서 확인할 수 있습니다.
+                          </div>
+                        </div>
                       </div>
+                      
                     ) : (
                       <div style={{ marginTop: 10, color: "#666" }}>Analyze를 누르면 결과가 표시됩니다.</div>
                     )}
