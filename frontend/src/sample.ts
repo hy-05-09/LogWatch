@@ -25,46 +25,11 @@ export const SAMPLE_MED = `{
   "logs": [
     {
       "event_id": "e-med-1",
-      "ts": "2026-02-03T10:00:10Z",
+      "ts": "2026-02-03T02:10:00Z",
       "actor": { "user_id": "u123" },
       "action": "LOGIN",
-      "result": "FAIL",
-      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
-      "target": { "resource": "auth", "sensitivity": "LOW" }
-    },
-    {
-      "event_id": "e-med-2",
-      "ts": "2026-02-03T10:01:10Z",
-      "actor": { "user_id": "u123" },
-      "action": "LOGIN",
-      "result": "FAIL",
-      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
-      "target": { "resource": "auth", "sensitivity": "LOW" }
-    },
-    {
-      "event_id": "e-med-3",
-      "ts": "2026-02-03T10:02:10Z",
-      "actor": { "user_id": "u123" },
-      "action": "LOGIN",
-      "result": "FAIL",
-      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
-      "target": { "resource": "auth", "sensitivity": "LOW" }
-    },
-    {
-      "event_id": "e-med-4",
-      "ts": "2026-02-03T10:02:15Z",
-      "actor": { "user_id": "u123" },
-      "action": "LOGIN",
-      "result": "FAIL",
-      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
-      "target": { "resource": "auth", "sensitivity": "LOW" }
-    },{
-      "event_id": "e-med-5",
-      "ts": "2026-02-03T10:02:20Z",
-      "actor": { "user_id": "u123" },
-      "action": "LOGIN",
-      "result": "FAIL",
-      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
+      "result": "SUCCESS",
+      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-x" },
       "target": { "resource": "auth", "sensitivity": "LOW" }
     }
   ],
@@ -72,7 +37,7 @@ export const SAMPLE_MED = `{
     "baseline": {
       "known_countries": ["KR"],
       "known_devices": ["dev-a"],
-      "typical_login_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17]
+      "typical_login_hours": [9,10,11,12,13,14,15,16,17]
     }
   }
 }`;

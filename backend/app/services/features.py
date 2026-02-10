@@ -16,6 +16,7 @@ class ComputedFeatures:
     failed_login_burst_count: int
     night_access: bool
     new_country: bool
+    new_device: bool
 
 # LogEvent에 대해 위험 신호 피처 계산
 def extract_features(logs: List[LogEvent], baseline:Optional[Baseline]) -> ComputedFeatures:
@@ -42,8 +43,13 @@ def extract_features(logs: List[LogEvent], baseline:Optional[Baseline]) -> Compu
     if baseline and latest.source.country:
         new_country = latest.source.country not in set(baseline.known_countries)
 
+    new_device = False
+    if baseline and latest.source.device_id:
+        new_device = latest.source.device_id not in set(baseline.known_devices)
+
     return ComputedFeatures(
         failed_login_burst_count=burst_fail,
         night_access=night,
-        new_country=new_country
+        new_country=new_country,
+        new_device=new_device,
     )

@@ -70,6 +70,26 @@ def score_risk(features: ComputedFeatures) -> Tuple[AnalyzeSummary, List[Signal]
                 why="신규 지역 로그인은 2차 인증/재인증으로 방어 효과가 큽니다.",
             )
         )
+    
+    # 4) 새 기기 접속
+    if getattr(features, "new_device", False):
+        w = 20
+        score += w
+        signals.append(
+            Signal(
+                key="new_device",
+                value=True,
+                weight=w,
+                reason="기존에 관측되지 않은 기기에서 로그인하여 기기 탈취/세션 하이재킹 가능성이 있습니다.",
+            )
+        )
+        actions.append(
+            ActionItem(
+                action="Step-up 인증(MFA) 요구 또는 해당 세션 종료 + 사용자 out-of-band 확인",
+                priority="P1",
+                why="신규 기기 로그인은 추가 인증으로 계정 탈취 피해를 크게 줄일 수 있습니다.",
+            )
+        )
 
     risk_level = _risk_level(score)
     decision = _decision(risk_level)

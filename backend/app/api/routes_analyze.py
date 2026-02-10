@@ -10,7 +10,7 @@ _retrievers: dict[str, PolicyRetriever] = {}
 
 def get_retriever(mode: str) -> PolicyRetriever:
     if mode not in _retrievers:
-        _retrievers[mode] = PolicyRetriever(mode=mode, enable_threshold=False)
+        _retrievers[mode] = PolicyRetriever(mode=mode, enable_threshold=True)
     return _retrievers[mode]
 
 

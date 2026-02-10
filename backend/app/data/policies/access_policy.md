@@ -12,6 +12,11 @@
 - Access during night hours should be flagged for review unless the user is on an approved exception list.
 - If night access occurs from a new device or new country, escalate.
 
+## New Device / Device Mismatch
+- Login from a device_id not previously associated with the user must be flagged for review.
+- Require step-up authentication (MFA) for new device logins whenever possible.
+- If new device login is combined with failed login burst or new country access, escalate to security review.
+
 ## Response Guidance
 - REVIEW: request user verification, check recent account activity, monitor subsequent logins.
 - ESCALATE: lock account temporarily, notify security team, open incident ticket.

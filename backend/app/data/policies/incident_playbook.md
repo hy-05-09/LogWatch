@@ -1,8 +1,9 @@
 # Security Incident Playbook
 
 ## Triage Rules
-- HIGH risk: multiple failed logins + new country OR anomalous time + device mismatch.
-- MED risk: either multiple failed logins OR night access OR new country alone.
+- HIGH risk: failed login burst + new country OR night access + device mismatch OR failed login burst + device mismatch.
+- MED risk: either failed login burst (below escalation threshold) OR night access alone OR new country alone OR new device alone.
+
 
 ## Operator Actions
 ### Failed Login Burst
