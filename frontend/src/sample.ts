@@ -49,6 +49,23 @@ export const SAMPLE_MED = `{
       "result": "FAIL",
       "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
       "target": { "resource": "auth", "sensitivity": "LOW" }
+    },
+    {
+      "event_id": "e-med-4",
+      "ts": "2026-02-03T10:02:15Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "FAIL",
+      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
+    },{
+      "event_id": "e-med-5",
+      "ts": "2026-02-03T10:02:20Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "FAIL",
+      "source": { "ip": "203.0.113.10", "country": "KR", "device_id": "dev-a" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
     }
   ],
   "context": {
@@ -93,6 +110,24 @@ export const SAMPLE_HIGH = `{
     {
       "event_id": "e-high-4",
       "ts": "2026-02-03T01:03:10Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "FAIL",
+      "source": { "ip": "198.51.100.10", "country": "US", "device_id": "dev-x" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
+    },
+    {
+      "event_id": "e-high-5",
+      "ts": "2026-02-03T01:03:15Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "FAIL",
+      "source": { "ip": "198.51.100.10", "country": "US", "device_id": "dev-x" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
+    },
+    {
+      "event_id": "e-high-6",
+      "ts": "2026-02-03T01:03:20Z",
       "actor": { "user_id": "u123" },
       "action": "LOGIN",
       "result": "FAIL",

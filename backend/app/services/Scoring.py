@@ -11,7 +11,7 @@ def score_risk(features: ComputedFeatures) -> Tuple[AnalyzeSummary, List[Signal]
 
     # 1) 실패 로그인 폭주 (최근 5분 내 FAIL)
     # - threshold는 3회로 설정
-    if features.failed_login_burst_count >= 3:
+    if features.failed_login_burst_count >= 5:
         w=min(40, 10 * features.failed_login_burst_count)
         score += w
         signals.append(

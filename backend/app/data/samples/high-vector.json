@@ -37,6 +37,24 @@
       "result": "FAIL",
       "source": { "ip": "198.51.100.10", "country": "US", "device_id": "dev-x" },
       "target": { "resource": "auth", "sensitivity": "LOW" }
+    },
+    {
+      "event_id": "e-high-5",
+      "ts": "2026-02-03T01:03:15Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "FAIL",
+      "source": { "ip": "198.51.100.10", "country": "US", "device_id": "dev-x" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
+    },
+    {
+      "event_id": "e-high-6",
+      "ts": "2026-02-03T01:03:20Z",
+      "actor": { "user_id": "u123" },
+      "action": "LOGIN",
+      "result": "FAIL",
+      "source": { "ip": "198.51.100.10", "country": "US", "device_id": "dev-x" },
+      "target": { "resource": "auth", "sensitivity": "LOW" }
     }
   ],
   "context": {
