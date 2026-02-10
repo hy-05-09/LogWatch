@@ -2,6 +2,137 @@ import { useMemo, useState } from "react";
 import "./App.css";
 import { SAMPLE_LOW, SAMPLE_MED, SAMPLE_HIGH } from "./sample.ts";
 
+type SignalItem = NonNullable<AnalyzeResponse["signals"]>[number];
+type ActionItem = NonNullable<AnalyzeResponse["recommended_actions"]>[number];
+type EvidenceItem = NonNullable<AnalyzeResponse["evidence"]>[number];
+
+function Chip({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "info" | "warn" | "danger";
+}) {
+  return <span className={`chip chip--${tone}`}>{children}</span>;
+}
+
+function Pill({ label, value }: { label: string; value?: React.ReactNode }) {
+  return (
+    <span className="pill">
+      <span className="pill__label">{label}</span>
+      <span className="pill__value">{value ?? "-"}</span>
+    </span>
+  );
+}
+
+function EmptyState({
+  title,
+  desc,
+}: {
+  title: string;
+  desc?: string;
+}) {
+  return (
+    <div className="empty">
+      <div className="empty__title">{title}</div>
+      {desc && <div className="empty__desc">{desc}</div>}
+    </div>
+  );
+}
+
+function SectionHeader({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div className="sectionHeader">
+      <div>
+        <div className="sectionHeader__title">{title}</div>
+        {subtitle && <div className="sectionHeader__sub">{subtitle}</div>}
+      </div>
+      {right && <div className="sectionHeader__right">{right}</div>}
+    </div>
+  );
+}
+
+function severityTone(weight?: number) {
+  if (typeof weight !== "number") return "neutral";
+  if (weight >= 0.8) return "danger";
+  if (weight >= 0.5) return "warn";
+  return "info";
+}
+
+function SignalCard({ s, idx }: { s: SignalItem; idx: number }) {
+  const key = s.key ?? `signal-${idx}`;
+  const tone = severityTone(s.weight);
+  return (
+    <div className="itemCard">
+      <div className="itemCard__top">
+        <div className="itemCard__title">{key}</div>
+        <div className="itemCard__meta">
+          <Chip tone={tone}>
+            severity {typeof s.weight === "number" ? s.weight.toFixed(2) : "—"}
+          </Chip>
+        </div>
+      </div>
+      {s.reason && <div className="itemCard__body">{s.reason}</div>}
+    </div>
+  );
+}
+
+function ActionCard({ a, idx }: { a: ActionItem; idx: number }) {
+  const title = a.action ?? `action-${idx}`;
+  const pr = (a.priority ?? "").toUpperCase();
+  const tone =
+    pr.includes("HIGH") ? "danger" : pr.includes("MED") ? "warn" : pr.includes("LOW") ? "info" : "neutral";
+
+  return (
+    <div className="itemCard">
+      <div className="itemCard__top">
+        <div className="itemCard__title">{title}</div>
+        <div className="itemCard__meta">
+          <Chip tone={tone}>{a.priority ?? "priority —"}</Chip>
+        </div>
+      </div>
+      {a.why && <div className="itemCard__body">{a.why}</div>}
+    </div>
+  );
+}
+
+function EvidenceCard({ ev, idx }: { ev: EvidenceItem; idx: number }) {
+  const title = ev.title ?? ev.doc_id ?? `doc-${idx}`;
+  const hasQuote = !!ev.quote?.trim();
+
+  return (
+    <div className="evidenceCard">
+      <div className="evidenceCard__header">
+        <div className="evidenceCard__title">{title}</div>
+        <div className="evidenceCard__right">
+          <Chip tone="neutral">
+            dist {typeof ev.distance === "number" ? ev.distance.toFixed(4) : "—"}
+          </Chip>
+        </div>
+      </div>
+
+      <div className="evidenceCard__metaRow">
+        <Pill label="section" value={ev.section ?? "-"} />
+        <Pill label="page" value={ev.page ?? "-"} />
+        <Pill label="chunk" value={ev.chunk_id ?? "-"} />
+      </div>
+
+      <div className="evidenceCard__quote">
+        {hasQuote ? <CollapsibleQuote quote={ev.quote} /> : <span style={{ color: "#666" }}>(no quote)</span>}
+      </div>
+    </div>
+  );
+}
+
+
 type AnalyzeResponse = {
   request_id?:string;
   summary?: {
@@ -132,6 +263,12 @@ export default function App() {
   const [resp, setResp] = useState<AnalyzeResponse | null>(null);
   const [view, setView] = useState<View>("overview");
   const [retrievalMode, setRetrievalMode] = useState<"vector" | "hybrid">("hybrid");
+  const [sigQuery, setSigQuery] = useState("");
+  const [actQuery, setActQuery] = useState("");
+  const [evQuery, setEvQuery] = useState("");
+  const [evOnlyQuoted, setEvOnlyQuoted] = useState(false);
+  const [evSort, setEvSort] = useState<"distance" | "title">("distance");
+
 
 
   const onSample = (which: "low" | "med" | "high") => {
@@ -180,6 +317,7 @@ export default function App() {
       }
 
       const data = JSON.parse(text) as AnalyzeResponse;
+      console.log("AnalyzeResponse:", data);
       setResp(data);
     } catch (e: any) {
       setError(`요청 실패: ${e?.message ?? String(e)}`);
@@ -192,6 +330,44 @@ export default function App() {
   const signals = resp?.signals ?? [];
   const actions = resp?.recommended_actions ?? [];
   const evidence = resp?.evidence ?? [];
+
+    const filteredSignals = useMemo(() => {
+    const q = sigQuery.trim().toLowerCase();
+    if (!q) return signals;
+    return signals.filter((s) =>
+      [s.key, s.reason].some((x) => (x ? String(x).toLowerCase().includes(q) : false))
+    );
+  }, [signals, sigQuery]);
+
+  const filteredActions = useMemo(() => {
+    const q = actQuery.trim().toLowerCase();
+    if (!q) return actions;
+    return actions.filter((a) =>
+      [a.action, a.priority, a.why].some((x) => (x ? String(x).toLowerCase().includes(q) : false))
+    );
+  }, [actions, actQuery]);
+
+  const filteredEvidence = useMemo(() => {
+    let list = evidence;
+    const q = evQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((ev) =>
+        [ev.title, ev.doc_id, ev.section, ev.chunk_id, ev.quote].some((x) =>
+          x ? String(x).toLowerCase().includes(q) : false
+        )
+      );
+    }
+    if (evOnlyQuoted) {
+      list = list.filter((ev) => (ev.quote ?? "").trim().length > 0);
+    }
+    if (evSort === "distance") {
+      list = [...list].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999));
+    } else {
+      list = [...list].sort((a, b) => String(a.title ?? a.doc_id ?? "").localeCompare(String(b.title ?? b.doc_id ?? "")));
+    }
+    return list;
+  }, [evidence, evQuery, evOnlyQuoted, evSort]);
+
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: 5, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto" }}>
@@ -334,76 +510,114 @@ export default function App() {
               )}
 
               {/* Signals / Actions */}
-              { view === "signals" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-                  <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-                    <div style={{ fontWeight: 800, marginBottom: 8 }}>Signals ({signals.length})</div>
-                    {signals.length === 0 ? (
-                      <div style={{ color: "#666" }}>(none)</div>
-                    ) : (
-                      <ul style={{ margin: 0, paddingLeft: 18 }}>
-                        {signals.map((s, i) => (
-                          <li key={i} style={{ marginBottom: 8 }}>
-                            <div><b>{s.key ?? `signal-${i}`}</b></div>
-                            {s.reason && <div style={{ color: "#555" }}>{s.reason}</div>}
-                            {s.weight && <div style={{ fontSize: 12, color: "#777" }}>severity: {s.weight}</div>}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+              {view === "signals" && (
+                <div className="tabGrid">
+                  <section className="panel">
+                    <SectionHeader
+                      title={`Signals (${filteredSignals.length}/${signals.length})`}
+                      // subtitle="리스크 판단에 사용된 신호들"
+                      right={
+                        <input
+                          className="search"
+                          value={sigQuery}
+                          onChange={(e) => setSigQuery(e.target.value)}
+                          placeholder="signals 검색 (key / reason)"
+                        />
+                      }
+                    />
 
-                  <div style={{ border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-                    <div style={{ fontWeight: 800, marginBottom: 8 }}>Recommended Actions ({actions.length})</div>
-                    {actions.length === 0 ? (
-                      <div style={{ color: "#666" }}>(none)</div>
+                    {signals.length === 0 ? (
+                      <EmptyState title="Signals가 없습니다" desc="LOW 케이스거나, 아직 분석 전일 수 있어요." />
+                    ) : filteredSignals.length === 0 ? (
+                      <EmptyState title="검색 결과가 없습니다" desc="검색어를 지우거나 다른 키워드를 입력해보세요." />
                     ) : (
-                      <ul style={{ margin: 0, paddingLeft: 18 }}>
-                        {actions.map((a, i) => (
-                          <li key={i} style={{ marginBottom: 8 }}>
-                            <div><b>{a.action ?? `action-${i}`}</b></div>
-                            {a.priority && <div style={{ color: "#555" }}>{a.priority}</div>}
-                            {a.why && <div style={{ fontSize: 12, color: "#777" }}>description: {a.why}</div>}
-                          </li>
+                      <div className="cardList">
+                        {filteredSignals.map((s, i) => (
+                          <SignalCard key={`${s.key ?? "sig"}-${i}`} s={s} idx={i} />
                         ))}
-                      </ul>
+                      </div>
                     )}
-                  </div>
+                  </section>
+
+                  <section className="panel">
+                    <SectionHeader
+                      title={`Recommended Actions (${filteredActions.length}/${actions.length})`}
+                      // subtitle="즉시 실행/검토 권장 조치"
+                      right={
+                        <input
+                          className="search"
+                          value={actQuery}
+                          onChange={(e) => setActQuery(e.target.value)}
+                          placeholder="actions 검색 (action / priority / why)"
+                        />
+                      }
+                    />
+
+                    {actions.length === 0 ? (
+                      <EmptyState title="권장 조치가 없습니다" desc="정책 근거가 부족하거나, LOW 판단일 수 있어요." />
+                    ) : filteredActions.length === 0 ? (
+                      <EmptyState title="검색 결과가 없습니다" desc="검색어를 지우거나 다른 키워드를 입력해보세요." />
+                    ) : (
+                      <div className="cardList">
+                        {filteredActions.map((a, i) => (
+                          <ActionCard key={`${a.action ?? "act"}-${i}`} a={a} idx={i} />
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 </div>
               )}
+
 
                 {/* Evidence */}
               {view === "evidence" && (
-                <div style={{ marginTop: 16, border: "1px solid #e5e5e5", borderRadius: 12, padding: 12, background: "#fff" }}>
-                  <div style={{ fontWeight: 800, marginBottom: 8 }}>Evidence ({evidence.length})</div>
+                <section className="panel" style={{ marginTop: 16 }}>
+                  <SectionHeader
+                    title={`Evidence (${filteredEvidence.length}/${evidence.length})`}
+                    subtitle="판단 근거로 사용된 문서 스니펫"
+                    right={
+                      <div className="evControls">
+                        <input
+                          className="search"
+                          value={evQuery}
+                          onChange={(e) => setEvQuery(e.target.value)}
+                          placeholder="evidence 검색 (title / section / quote ...)"
+                        />
+
+                        <label className="toggle">
+                          <input
+                            type="checkbox"
+                            checked={evOnlyQuoted}
+                            onChange={(e) => setEvOnlyQuoted(e.target.checked)}
+                          />
+                          quote만
+                        </label>
+
+                        <select className="select" value={evSort} onChange={(e) => setEvSort(e.target.value as any)}>
+                          <option value="distance">거리순</option>
+                          <option value="title">제목순</option>
+                        </select>
+                      </div>
+                    }
+                  />
+
                   {evidence.length === 0 ? (
-                    <div style={{ color: "#666" }}>
-                      (none) — guardrail 정책상 근거가 없으면 추측 기반 ESCALATE는 금지될 수 있습니다.
-                    </div>
+                    <EmptyState
+                      title="Evidence가 없습니다"
+                      desc="guardrail 정책상 근거가 없으면 추측 기반 ESCALATE는 금지될 수 있습니다."
+                    />
+                  ) : filteredEvidence.length === 0 ? (
+                    <EmptyState title="검색/필터 결과가 없습니다" desc="필터를 해제하거나 검색어를 바꿔보세요." />
                   ) : (
-                    <div style={{ display: "grid", gap: 12 }}>
-                      {evidence.map((ev, i) => (
-                        <div key={i} style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                            <div style={{ fontWeight: 800 }}>{ev.title ?? ev.doc_id ?? `doc-${i}`}</div>
-                            <div style={{ fontSize: 12, color: "#666" }}>
-                              distance: {typeof ev.distance === "number" ? ev.distance.toFixed(4) : "-"}
-                            </div>
-                          </div>
-
-                          <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
-                            section: {ev.section ?? "-"} | page: {ev.page ?? "-"} | chunk_id: {ev.chunk_id ?? "-"}
-                          </div>
-
-                          <div style={{ marginTop: 10 }}>
-                            <CollapsibleQuote quote={ev.quote} />
-                          </div>
-                        </div>
+                    <div className="evidenceList">
+                      {filteredEvidence.map((ev, i) => (
+                        <EvidenceCard key={`${ev.doc_id ?? ev.title ?? "ev"}-${i}`} ev={ev} idx={i} />
                       ))}
                     </div>
                   )}
-                </div>
+                </section>
               )}
+
 
               {/* <div style={{ marginTop: 18, fontSize: 12, color: "#777" }}>
                 Endpoint: <code>POST http://127.0.0.1:8000/api/analyze</code>
