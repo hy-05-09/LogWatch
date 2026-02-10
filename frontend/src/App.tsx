@@ -5,6 +5,8 @@ import { SAMPLE_LOW, SAMPLE_MED, SAMPLE_HIGH } from "./sample.ts";
 type SignalItem = NonNullable<AnalyzeResponse["signals"]>[number];
 type ActionItem = NonNullable<AnalyzeResponse["recommended_actions"]>[number];
 type EvidenceItem = NonNullable<AnalyzeResponse["evidence"]>[number];
+type OpenPdfFn = (docId: string, page?: number | null, title?: string) => void;
+
 
 function Chip({
   children,
@@ -105,9 +107,12 @@ function ActionCard({ a, idx }: { a: ActionItem; idx: number }) {
   );
 }
 
-function EvidenceCard({ ev, idx }: { ev: EvidenceItem; idx: number }) {
+function EvidenceCard({ ev, idx, onOpenPdf }: { ev: EvidenceItem; idx: number; onOpenPdf: OpenPdfFn }) {
   const title = ev.title ?? ev.doc_id ?? `doc-${idx}`;
   const hasQuote = !!ev.quote?.trim();
+  const isPdf = (ev.title ?? "").toLowerCase().endsWith(".pdf");
+  const pdfDocId = ev.doc_id; 
+  const canOpenPdf = isPdf && !!pdfDocId;
 
   return (
     <div className="evidenceCard">
@@ -119,6 +124,16 @@ function EvidenceCard({ ev, idx }: { ev: EvidenceItem; idx: number }) {
               ? `Vector dist ${ev.distance.toFixed(4)}`
               : "BM25 match"}
           </Chip>
+
+          {canOpenPdf && (
+            <button
+              className="pdfBtn"
+              onClick={() => onOpenPdf(pdfDocId!, ev.page ?? null, ev.title ?? `${pdfDocId}.pdf`)}
+              title="정책 PDF를 페이지로 열기"
+            >
+              PDF 열기{typeof ev.page === "number" ? ` (p.${ev.page})` : ""}
+            </button>
+          )}
         </div>
       </div>
 
@@ -259,6 +274,39 @@ function NavItem({
   );
 }
 
+function PdfModal({
+  open,
+  url,
+  title,
+  onClose,
+}: {
+  open: boolean;
+  url: string;
+  title?: string;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="pdfModal__backdrop" onClick={onClose}>
+      <div className="pdfModal__panel" onClick={(e) => e.stopPropagation()}>
+        <div className="pdfModal__header">
+          <div className="pdfModal__title">{title ?? "Policy PDF"}</div>
+          <div className="pdfModal__actions">
+            <a className="pdfModal__link" href={url} target="_blank" rel="noreferrer">
+              새 탭으로 열기
+            </a>
+            <button className="pdfModal__close" onClick={onClose}>닫기</button>
+          </div>
+        </div>
+
+        <iframe className="pdfModal__frame" src={url} title={title ?? "pdf"} />
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   const [input, setInput] = useState<string>("로그를 입력하세요.");
   const [loading, setLoading] = useState(false);
@@ -271,7 +319,10 @@ export default function App() {
   const [evQuery, setEvQuery] = useState("");
   const [evOnlyQuoted, setEvOnlyQuoted] = useState(false);
   const [evSort, setEvSort] = useState<"distance" | "title">("distance");
-
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfTitle, setPdfTitle] = useState<string>("");
+  
 
 
   const onSample = (which: "low" | "med" | "high") => {
@@ -393,6 +444,21 @@ const summaryEvidence = useMemo(() => {
     }
     return list;
   }, [evidence, evQuery, evOnlyQuoted, evSort]);
+
+  const openPdf: OpenPdfFn = (docId, page, title) => {
+    // docId가 access_policy 같은 base id로 들어오든,
+    // title이 access_policy.pdf / access_policy.md로 들어오든 안전하게 처리
+    const base = (title ?? docId).replace(/\.(md|pdf)$/i, "");
+    const filename = `${base}.pdf`;
+
+    const baseUrl = `http://127.0.0.1:8000/api/policies/${encodeURIComponent(filename)}`;
+    const withPage = typeof page === "number" ? `${baseUrl}#page=${page}` : baseUrl;
+
+    setPdfTitle(title ?? filename);
+    setPdfUrl(withPage);
+    setPdfOpen(true); // 너 모달 state 쓰고 싶으면 유지, 아니면 없어도 됨
+  };
+
 
 
   return (
@@ -668,17 +734,61 @@ const summaryEvidence = useMemo(() => {
                   ) : (
                     <div className="evidenceList">
                       {filteredEvidence.map((ev, i) => (
-                        <EvidenceCard key={`${ev.doc_id ?? ev.title ?? "ev"}-${i}`} ev={ev} idx={i} />
+                        <EvidenceCard
+                          key={`${ev.doc_id ?? ev.title ?? "ev"}-${i}`}
+                          ev={ev}
+                          idx={i}
+                          onOpenPdf={openPdf}
+                        />
                       ))}
                     </div>
                   )}
                 </section>
               )}
 
+              {pdfUrl && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.45)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 9999,
+                    padding: 20,
+                  }}
+                  onClick={() => setPdfUrl(null)}
+                >
+                  <div
+                    style={{
+                      width: "min(1100px, 96vw)",
+                      height: "min(820px, 92vh)",
+                      background: "white",
+                      borderRadius: 16,
+                      overflow: "hidden",
+                      boxShadow: "0 24px 70px rgba(0,0,0,0.25)",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={{ padding: "10px 12px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontWeight: 800, fontSize: 13 }}>{pdfTitle}</div>
+                      <button onClick={() => setPdfUrl(null)} style={{ padding: "6px 10px", borderRadius: 12, fontSize: 12 }}>
+                        닫기
+                      </button>
+                    </div>
 
-              {/* <div style={{ marginTop: 18, fontSize: 12, color: "#777" }}>
-                Endpoint: <code>POST http://127.0.0.1:8000/api/analyze</code>
-              </div> */}
+                    <iframe
+                      title={pdfTitle}
+                      src={pdfUrl}
+                      style={{ flex: 1, border: "none" }}
+                    />
+                  </div>
+                </div>
+              )}
+
             </div>
         </main>
       </div>

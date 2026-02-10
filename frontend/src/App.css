@@ -553,6 +553,14 @@ input[type="radio"]{
   margin-top: 10px;
 }
 
+.evidenceCard__right{
+  display: flex;
+  align-items: center;
+  gap: 10px;          
+  flex-wrap: wrap;     
+}
+
+
 .pill{
   display:inline-flex;
   gap: 8px;
@@ -578,4 +586,84 @@ input[type="radio"]{
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(15,23,42,0.06);
+}
+
+.pdfBtn{
+  border-radius: 999px;
+  padding: 6px 10px;
+  margin-left: 10;
+  font-size: 11.5px;
+  font-weight: 800;
+  border: 1px solid rgba(43,102,246,0.28);
+  background: rgba(43,102,246,0.10);
+  cursor: pointer;
+}
+
+.pdfBtn:hover{
+  border-color: rgba(43,102,246,0.40);
+  background: rgba(43,102,246,0.14);
+}
+
+.pdfModal__backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.pdfModal__panel{
+  width: min(1100px, 96vw);
+  height: min(720px, 92vh);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(15,23,42,0.14);
+  box-shadow: 0 30px 90px rgba(0,0,0,0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdfModal__header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(15,23,42,0.08);
+}
+
+.pdfModal__title{
+  font-weight: 900;
+  font-size: 13px;
+  color: rgba(18,24,38,0.95);
+}
+
+.pdfModal__actions{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdfModal__link{
+  font-size: 12px;
+  font-weight: 800;
+  color: #0b57d0;
+  text-decoration: none;
+}
+
+.pdfModal__close{
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.pdfModal__frame{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
 }
