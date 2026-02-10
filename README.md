@@ -50,12 +50,12 @@
 
 ---
 
-## Architecture
-
 ## Tech Stack
 - Backend: FastAPI, Pydantic, Uvicorn
 - RAG/Retrieval: Chroma, sentence-transformers (all-MiniLM-L6-v2), BM25, EnsembleRetriever
 - Frontend: React + TypeScript (Vite)
+
+---
 
 ## Quickstart (Local Demo)
 1) Backend
@@ -84,6 +84,7 @@ npm run dev
 
 - UI:  http://127.0.0.1:5173
 
+---
 
 ## Design Notes / Assumptions
 
@@ -91,6 +92,7 @@ npm run dev
 - Hybrid 모드에서 일부 BM25-only 결과는 vector distance가 없을 수 있으며(distance=None), debug로 추적합니다.
 - 정책 문서가 변경되면 인덱스 재생성이 필요합니다.
 
+---
 
 ## Limitations & Next Steps
 
@@ -98,5 +100,6 @@ npm run dev
 - 결과 저장 및 히스토리: 분석 결과 저장/추적성 강화
 - 배포: Docker/Cloud 배포 및 공개 데모 링크 제공
 
+---
 ## Links
 - YouTube Demo Video: https://youtu.be/CemdE8yQkoc?si=VMU0mWzulxWgPVJF
