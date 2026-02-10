@@ -60,11 +60,12 @@ function SectionHeader({
   );
 }
 
+
 function severityTone(weight?: number) {
   if (typeof weight !== "number") return "neutral";
-  if (weight >= 0.8) return "danger";
-  if (weight >= 0.5) return "warn";
-  return "info";
+  if (weight >= 35) return "danger"; 
+  if (weight >= 20) return "warn";   
+  return "info";                     
 }
 
 function SignalCard({ s, idx }: { s: SignalItem; idx: number }) {
@@ -89,7 +90,7 @@ function ActionCard({ a, idx }: { a: ActionItem; idx: number }) {
   const title = a.action ?? `action-${idx}`;
   const pr = (a.priority ?? "").toUpperCase();
   const tone =
-    pr.includes("HIGH") ? "danger" : pr.includes("MED") ? "warn" : pr.includes("LOW") ? "info" : "neutral";
+    pr.includes("P0") ? "danger" : pr.includes("P1") ? "warn" : pr.includes("P2") ? "info" : "neutral";
 
   return (
     <div className="itemCard">

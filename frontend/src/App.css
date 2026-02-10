@@ -451,18 +451,18 @@ input[type="radio"]{
 }
 
 .chip--info{
-  border-color: rgba(43,102,246,0.22);
-  background: rgba(43,102,246,0.10);
+  border-color: rgba(234,179,8,0.28);
+  background: rgba(234,179,8,0.14);
 }
 
 .chip--warn{
-  border-color: rgba(245,158,11,0.22);
-  background: rgba(245,158,11,0.10);
+  border-color: rgba(249,115,22,0.28);
+  background: rgba(249,115,22,0.14);
 }
 
 .chip--danger{
-  border-color: rgba(244,63,94,0.22);
-  background: rgba(244,63,94,0.10);
+  border-color: rgba(244,63,94,0.28);
+  background: rgba(244,63,94,0.14);
 }
 
 .chip--neutral{
