@@ -60,6 +60,7 @@ def _doc_to_evidence(doc: Document, *, distance: Optional[float] = None) -> Evid
         distance=distance,
     )
 
+
 class PolicyRetriever:
     """
     LangChain 기반 Retriever 레이어.
@@ -109,6 +110,21 @@ class PolicyRetriever:
                 retrievers=[bm25, self.vector_retriever],
                 weights=[w_bm25, w_vec]
             )
+
+    def _vector_score_map(self, query: str, k: int) -> Dict[str, float]:
+        """
+        Chroma에서 query에 대한 결과를 score(distance) 포함으로 가져와
+        {chunk_id: distance} 맵으로 만든다.
+        - distance: 작을수록 유사
+        """
+        pairs = self.vs.similarity_search_with_score(query, k=k)
+        out: Dict[str, float] = {}
+        for doc, dist in pairs:
+            cid = (doc.metadata or {}).get("chunk_id")
+            if cid:
+                # 더 작은 dist가 더 좋은 결과이므로, 최소값 유지
+                out[cid] = min(out.get(cid, float("inf")), float(dist))
+        return out
 
 
     def _vector_hits_with_optional_score(
@@ -181,21 +197,40 @@ class PolicyRetriever:
             vec_counts = []
 
             for q in queries:
-                bm25_docs = self.bm25_retriever.invoke(q)
-                bm25_counts.append({"q":q, "hits": len(bm25_docs)})
+                # bm25_docs = self.bm25_retriever.invoke(q)
+                # bm25_counts.append({"q":q, "hits": len(bm25_docs)})
 
+                # vec_docs, _ = self._vector_hits_with_optional_score(q)
+                # vec_counts.append({"q":q, "hits":len(vec_docs)})
+
+                # ens_docs = self.ensemble.invoke(q)
+                # for d in ens_docs:
+                #     all_hits.append(_doc_to_evidence(d, distance=None))
+                bm25_docs = self.bm25_retriever.invoke(q)
+                bm25_counts.append({"q": q, "hits": len(bm25_docs)})
+
+                # 벡터 검색 결과/카운트(기존 유지)
                 vec_docs, _ = self._vector_hits_with_optional_score(q)
-                vec_counts.append({"q":q, "hits":len(vec_docs)})
+                vec_counts.append({"q": q, "hits": len(vec_docs)})
+
+                score_map = self._vector_score_map(q, k=self.top_k)
 
                 ens_docs = self.ensemble.invoke(q)
                 for d in ens_docs:
-                    all_hits.append(_doc_to_evidence(d, distance=None))
+                    cid = (d.metadata or {}).get("chunk_id")
+                    dist = score_map.get(cid) if cid else None
+                    all_hits.append(_doc_to_evidence(d, distance=dist))
+
 
             debug["hybrid"] = {
                 "weights": list(self.ensemble_weights),
                 "bm25_per_query": bm25_counts,
                 "vector_per_query": vec_counts,
             }
+
+            with_dist = sum(1 for e in all_hits if e.distance is not None)
+            debug["hybrid"]["distance_coverage"] = f"{with_dist}/{len(all_hits)}"
+
 
 
         # 공통 후처리       

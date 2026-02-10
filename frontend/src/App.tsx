@@ -114,7 +114,9 @@ function EvidenceCard({ ev, idx }: { ev: EvidenceItem; idx: number }) {
         <div className="evidenceCard__title">{title}</div>
         <div className="evidenceCard__right">
           <Chip tone="neutral">
-            dist {typeof ev.distance === "number" ? ev.distance.toFixed(4) : "—"}
+            {typeof ev.distance === "number"
+              ? `Vector dist ${ev.distance.toFixed(4)}`
+              : "BM25 match"}
           </Chip>
         </div>
       </div>
