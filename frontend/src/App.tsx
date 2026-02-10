@@ -153,7 +153,7 @@ export default function App() {
     try {
       payload = JSON.parse(input);
     } catch (e) {
-      setError("JSON 파싱 실패: 입력 JSON 형식을 확인해줘.");
+      setError("JSON 파싱 실패: 입력 JSON 형식을 확인해주세요.");
       return;
     }
 
@@ -206,13 +206,13 @@ export default function App() {
 
 
         <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-          <button onClick={() => onSample("low")}>샘플 LOW</button>
-          <button onClick={() => onSample("med")}>샘플 MED</button>
-          <button onClick={() => onSample("high")}>샘플 HIGH</button>
+          <button className="btn btn--sample" onClick={() => onSample("low")}>샘플 LOW</button>
+          <button className="btn btn--sample" onClick={() => onSample("med")}>샘플 MED</button>
+          <button className="btn btn--sample" onClick={() => onSample("high")}>샘플 HIGH</button>
         </div>
 
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-          <button onClick={onAnalyze} disabled={loading} style={{ fontWeight: 700 }}>
+          <button className="btn btn--nav" onClick={onAnalyze} disabled={loading} style={{ fontWeight: 700 }}>
             {loading ? "Analyzing..." : "Analyze"}
           </button>
         </div>
@@ -237,7 +237,7 @@ export default function App() {
           </div>
 
           <NavItem label="Overview" active={view === "overview"} onClick={() => setView("overview")}/>
-          <NavItem
+          <NavItem 
             label={`Signals & Actions${resp ? ` (${signals.length}/${actions.length})` : ""}`}
             active={view === "signals"}
             onClick={() => setView("signals")}
@@ -275,9 +275,9 @@ export default function App() {
             </label>
 
             {/* 선택: 현재 선택값 표시(디버깅/데모용) */}
-            <div style={{ marginTop: 8, fontSize: 11, color: "#888" }}>
+            {/* <div style={{ marginTop: 8, fontSize: 11, color: "#888" }}>
               Current: <b>{retrievalMode}</b>
-            </div>
+            </div> */}
           </div>
         </aside>
 
