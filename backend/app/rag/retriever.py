@@ -36,6 +36,18 @@ def _dedupe_evidence(items: List[Evidence]) -> List[Evidence]:
         seen.add(e.chunk_id)
     return out
 
+def _dedupe_by_section(items: List[Evidence]) -> List[Evidence]:
+    seen = set()
+    out = []
+    for e in items:
+        key = (e.doc_id, e.section)
+        if key in seen:
+            continue
+        out.append(e)
+        seen.add(key)
+    return out
+
+
 def _doc_to_evidence(doc: Document, *, distance: Optional[float] = None) -> Evidence:
     meta = doc.metadata or {}
     return Evidence(
@@ -191,4 +203,5 @@ class PolicyRetriever:
         all_hits.sort(key=lambda e: (e.distance if e.distance is not None else 9999.0))
 
         debug["evidence_count"] = len(all_hits)
+        all_hits = _dedupe_by_section(all_hits)
         return all_hits, debug
