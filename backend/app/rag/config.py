@@ -20,3 +20,6 @@ RETRIEVAL_DISTANCE_THRESHOLD = 0.85
 
 # evidence snippet 길이 제한
 EVIDENCE_SNIPPET_MAX_CHARS = 350
+
+# RRF(Reciprocal Rank Fusion) 완충 상수. 관례적으로 60
+RRF_C = 60

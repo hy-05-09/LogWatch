@@ -1,0 +1,129 @@
+﻿{
+    "request_id":  "demo-med",
+    "summary":  {
+                    "risk_score":  35,
+                    "risk_level":  "MED",
+                    "decision":  "REVIEW"
+                },
+    "signals":  [
+                    {
+                        "key":  "night_access",
+                        "value":  true,
+                        "weight":  15,
+                        "reason":  "ì¼ê° ìê°ë ì ìì íì í¨í´ê³¼ ë¤ë¥¼ ì ìì´ ì¶ê° íì¸ì´ íìí©ëë¤."
+                    },
+                    {
+                        "key":  "new_device",
+                        "value":  true,
+                        "weight":  20,
+                        "reason":  "ê¸°ì¡´ì ê´ì¸¡ëì§ ìì ê¸°ê¸°ìì ë¡ê·¸ì¸íì¬ ê¸°ê¸° íì·¨/ì¸ì\u0085 íì´ì¬í¹ ê°ë¥ì±ì´ ììµëë¤."
+                    }
+                ],
+    "recommended_actions":  [
+                                {
+                                    "action":  "í´ë¹ ì¸ì\u0085/ê³ì ì ìµê·¼ íë ë¡ê·¸ ì¶ê° ì ê²",
+                                    "priority":  "P2",
+                                    "why":  "ì¼ê° ì ìì´ ì ì ì\u0085ë¬´ì¸ì§ íì¸íë©´ ì¤íì ì¤ì¼ ì ììµëë¤."
+                                },
+                                {
+                                    "action":  "Step-up ì¸ì¦(MFA) ìêµ¬ ëë í´ë¹ ì¸ì\u0085 ì¢\u0085ë£ + ì¬ì©ì out-of-band íì¸",
+                                    "priority":  "P1",
+                                    "why":  "ì ê· ê¸°ê¸° ë¡ê·¸ì¸ì ì¶ê° ì¸ì¦ì¼ë¡ ê³ì  íì·¨ í¼í´ë¥¼ í¬ê² ì¤ì¼ ì ììµëë¤."
+                                }
+                            ],
+    "evidence":  [
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "Night Access (00:00â06:00)",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s2::c0",
+                         "quote":  "- Access during night hours should be flagged for review unless the user is on an approved exception list.\n- If night access occurs from a new device or new country, escalate.",
+                         "distance":  0.3112388253211975
+                     },
+                     {
+                         "doc_id":  "incident_playbook",
+                         "title":  "incident_playbook.pdf",
+                         "section":  "page1",
+                         "page":  1,
+                         "chunk_id":  "incident_playbook::s5::c0",
+                         "quote":  "# Security Incident Playbook\n\n## Triage Rules \n- HIGH risk: failed login burst + new country OR night access + device mismatch OR \nfailed login burst + device mismatch. \n- MED risk: either failed login burst (below escalation threshold) OR night access alone \nOR new country alone OR new device alone.\n\n## Operator Actions \n### Failed Login Burst...",
+                         "distance":  0.5256438851356506
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "Response Guidance",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s4::c0",
+                         "quote":  "- REVIEW: request user verification, check recent account activity, monitor subsequent logins.\n- ESCALATE: lock account temporarily, notify security team, open incident ticket.",
+                         "distance":  0.5694469809532166
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "Authentication Failure Monitoring",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s0::c0",
+                         "quote":  "- Within a 5-minute window, 5 or more failed login attempts from the same user or IP must be treated as suspicious.\n- If failures are repeated across multiple accounts from the same IP, escalate incident priority.",
+                         "distance":  0.6525200605392456
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "New Country / Geo-velocity",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s1::c0",
+                         "quote":  "- Access from a new country not previously associated with the user requires additional verification.\n- If new country access is combined with failed logins, escalate to security review immediately.",
+                         "distance":  0.6862715482711792
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "New Device / Device Mismatch",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s3::c0",
+                         "quote":  "- Login from a device_id not previously associated with the user must be flagged for review.\n- Require step-up authentication (MFA) for new device logins whenever possible.\n- If new device login is combined with failed login burst or new country access, escalate to security review.",
+                         "distance":  null
+                     }
+                 ],
+    "debug":  {
+                  "mode":  "hybrid",
+                  "queries":  [
+                                  "night access 00:00-06:00, after-hours access review, exception list, escalation conditions",
+                                  "new device login, device mismatch, step-up authentication, escalate conditions, security incident playbook triage"
+                              ],
+                  "top_k":  5,
+                  "enable_threshold":  true,
+                  "threshold":  0.85,
+                  "hybrid":  {
+                                 "weights":  [
+                                                 0.4,
+                                                 0.6
+                                             ],
+                                 "bm25_per_query":  [
+                                                        {
+                                                            "q":  "night access 00:00-06:00, after-hours access review, exception list, escalation conditions",
+                                                            "hits":  5
+                                                        },
+                                                        {
+                                                            "q":  "new device login, device mismatch, step-up authentication, escalate conditions, security incident playbook triage",
+                                                            "hits":  5
+                                                        }
+                                                    ],
+                                 "vector_per_query":  [
+                                                          {
+                                                              "q":  "night access 00:00-06:00, after-hours access review, exception list, escalation conditions",
+                                                              "hits":  5
+                                                          },
+                                                          {
+                                                              "q":  "new device login, device mismatch, step-up authentication, escalate conditions, security incident playbook triage",
+                                                              "hits":  5
+                                                          }
+                                                      ],
+                                 "distance_coverage":  "10/11"
+                             },
+                  "evidence_count":  6,
+                  "guardrail_no_evidence":  false
+              }
+}

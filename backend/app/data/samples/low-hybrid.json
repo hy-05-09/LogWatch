@@ -1,6 +1,5 @@
 {
   "request_id": "demo-low",
-  "retrieval_mode": "hybrid",
   "logs": [
     {
       "event_id": "e-low-1",
@@ -13,6 +12,7 @@
     }
   ],
   "context": {
+    "retrieval_mode": "hybrid",
     "baseline": {
       "known_countries": ["KR"],
       "known_devices": ["dev-a"],

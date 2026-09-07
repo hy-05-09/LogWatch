@@ -1,6 +1,5 @@
 {
   "request_id": "demo-high",
-  "retrieval_mode": "vector",
   "logs": [
     {
       "event_id": "e-high-1",
@@ -58,6 +57,7 @@
     }
   ],
   "context": {
+    "retrieval_mode": "vector",
     "baseline": {
       "known_countries": ["KR"],
       "known_devices": ["dev-a"]

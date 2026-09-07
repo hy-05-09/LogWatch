@@ -85,6 +85,9 @@ class Evidence(BaseModel):
     chunk_id: str 
     quote: Optional[str] = None
     distance: Optional[float] = None # vector distance (smaller = more similar)
+    rrf_score: Optional[float] = None     
+    bm25_rank: Optional[int] = None      
+    vector_rank: Optional[int] = None
 
 # 점수/등급/결정 요약
 class AnalyzeSummary(BaseModel):

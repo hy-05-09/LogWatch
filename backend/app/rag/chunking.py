@@ -18,10 +18,6 @@ class Chunk:
     - 단락들을 max_chars 근처로 합치고 overlap 적용
     """
 def chunk_text(text: str, max_chars: int = 900, overlap: int = 150) -> List[str]:
-    # paras = []
-    # for p in re.split(r"\n\s*\n", text):
-    #     if p.strip():
-    #         paras.append(p.strip())
     paras = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     if not paras:
         return []

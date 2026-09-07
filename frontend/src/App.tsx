@@ -318,7 +318,7 @@ export default function App() {
   const [actQuery, setActQuery] = useState("");
   const [evQuery, setEvQuery] = useState("");
   const [evOnlyQuoted, setEvOnlyQuoted] = useState(false);
-  const [evSort, setEvSort] = useState<"distance" | "title">("distance");
+  const [evSort, setEvSort] = useState<"server" | "distance" | "title">("server");
   const [pdfOpen, setPdfOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfTitle, setPdfTitle] = useState<string>("");
@@ -439,7 +439,7 @@ const summaryEvidence = useMemo(() => {
     }
     if (evSort === "distance") {
       list = [...list].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999));
-    } else {
+    } else if (evSort === "title") {
       list = [...list].sort((a, b) => String(a.title ?? a.doc_id ?? "").localeCompare(String(b.title ?? b.doc_id ?? "")));
     }
     return list;
@@ -717,6 +717,7 @@ const summaryEvidence = useMemo(() => {
                         </label>
 
                         <select className="select" value={evSort} onChange={(e) => setEvSort(e.target.value as any)}>
+                          <option value="server">관련도순</option>
                           <option value="distance">거리순</option>
                           <option value="title">제목순</option>
                         </select>

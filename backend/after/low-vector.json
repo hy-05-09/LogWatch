@@ -1,0 +1,95 @@
+﻿{
+    "request_id":  "demo-low",
+    "summary":  {
+                    "risk_score":  0,
+                    "risk_level":  "LOW",
+                    "decision":  "ALLOW"
+                },
+    "signals":  [
+
+                ],
+    "recommended_actions":  [
+
+                            ],
+    "evidence":  [
+                     {
+                         "doc_id":  "incident_playbook",
+                         "title":  "incident_playbook.pdf",
+                         "section":  "page1",
+                         "page":  1,
+                         "chunk_id":  "incident_playbook::s5::c0",
+                         "quote":  "# Security Incident Playbook\n\n## Triage Rules \n- HIGH risk: failed login burst + new country OR night access + device mismatch OR \nfailed login burst + device mismatch. \n- MED risk: either failed login burst (below escalation threshold) OR night access alone \nOR new country alone OR new device alone.\n\n## Operator Actions \n### Failed Login Burst...",
+                         "distance":  0.5493392944335938,
+                         "rrf_score":  null,
+                         "bm25_rank":  null,
+                         "vector_rank":  null
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "Night Access (00:00â06:00)",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s2::c0",
+                         "quote":  "- Access during night hours should be flagged for review unless the user is on an approved exception list.\n- If night access occurs from a new device or new country, escalate.",
+                         "distance":  0.5788187980651855,
+                         "rrf_score":  null,
+                         "bm25_rank":  null,
+                         "vector_rank":  null
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "Response Guidance",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s4::c0",
+                         "quote":  "- REVIEW: request user verification, check recent account activity, monitor subsequent logins.\n- ESCALATE: lock account temporarily, notify security team, open incident ticket.",
+                         "distance":  0.662946343421936,
+                         "rrf_score":  null,
+                         "bm25_rank":  null,
+                         "vector_rank":  null
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "New Device / Device Mismatch",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s3::c0",
+                         "quote":  "- Login from a device_id not previously associated with the user must be flagged for review.\n- Require step-up authentication (MFA) for new device logins whenever possible.\n- If new device login is combined with failed login burst or new country access, escalate to security review.",
+                         "distance":  0.6641445159912109,
+                         "rrf_score":  null,
+                         "bm25_rank":  null,
+                         "vector_rank":  null
+                     },
+                     {
+                         "doc_id":  "access_policy",
+                         "title":  "access_policy.md",
+                         "section":  "New Country / Geo-velocity",
+                         "page":  null,
+                         "chunk_id":  "access_policy::s1::c0",
+                         "quote":  "- Access from a new country not previously associated with the user requires additional verification.\n- If new country access is combined with failed logins, escalate to security review immediately.",
+                         "distance":  0.6789842844009399,
+                         "rrf_score":  null,
+                         "bm25_rank":  null,
+                         "vector_rank":  null
+                     }
+                 ],
+    "debug":  {
+                  "mode":  "vector",
+                  "queries":  [
+                                  "access log risk assessment criteria and operator response guidance (REVIEW/ESCALATE) policy evidence"
+                              ],
+                  "top_k":  5,
+                  "enable_threshold":  true,
+                  "threshold":  0.85,
+                  "vector":  {
+                                 "per_query":  [
+                                                   {
+                                                       "q":  "access log risk assessment criteria and operator response guidance (REVIEW/ESCALATE) policy evidence",
+                                                       "hits":  5
+                                                   }
+                                               ]
+                             },
+                  "evidence_count":  5,
+                  "guardrail_no_evidence":  false
+              }
+}
